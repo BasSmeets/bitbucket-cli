@@ -1,7 +1,7 @@
 {
     "name": "bassmeets/bitbucketcliphp",
     "description": "PHP CLI application to interact with bitbucket api",
-    "keywords": ["framework", "laravel", "laravel zero", "console", "cli"],
+    "keywords": ["framework", "laravel", "laravel zero", "console", "cli", "bitbucket", "bitbucket-client"],
     "homepage": "https://github.com/BasSmeets",
     "type": "project",
     "license": "MIT",
@@ -10,11 +10,11 @@
         "graham-campbell/bitbucket": "^8.0",
         "guzzlehttp/psr7": "^2.0",
         "illuminate/http": "^8.0",
-        "laravel-zero/framework": "^8.8",
         "php-http/curl-client": "^2.2",
         "php-http/message": "^1.11"
     },
     "require-dev": {
+        "laravel-zero/framework": "^8.8",
         "mockery/mockery": "^1.4.3",
         "pestphp/pest": "^1.3"
     },
