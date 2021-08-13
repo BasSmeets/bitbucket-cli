@@ -1,4 +1,4 @@
-# bitbucketcliphp
+# Bitbucket CLI
 This is really a wrapper cli tool on top of https://github.com/BitbucketPHP/Client using https://laravel-zero.com/. This will help with working more efficiently when using bitbucket. 
 
 ## Commands

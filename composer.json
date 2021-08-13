@@ -1,5 +1,5 @@
 {
-    "name": "bassmeets/bitbucketcliphp",
+    "name": "bassmeets/bitbucket-cli",
     "description": "PHP CLI application to interact with bitbucket api",
     "keywords": ["framework", "laravel", "laravel zero", "console", "cli", "bitbucket", "bitbucket-client"],
     "homepage": "https://github.com/BasSmeets",

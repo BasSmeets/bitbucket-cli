@@ -72,7 +72,11 @@ class PrCreate extends Command
         });
     }
 
-    public function authenticate()
+    /**
+     * Authenticate to bitbucket api
+     * @return bool
+     */
+    public function authenticate(): bool
     {
         $pass = ENV('BB_PASSWORD');
         $username = ENV('BB_USERNAME');
