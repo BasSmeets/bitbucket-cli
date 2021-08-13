@@ -9,8 +9,9 @@ This is really a wrapper cli tool on top of https://github.com/BitbucketPHP/Clie
 - merge pr's
 
 ## TODO
-get the reposlug and workspace from git using the current working directory.
-check if this also works when having installed this package globally.
+- get the reposlug and workspace from git using the current working directory.
+- check if this also works when having installed this package globally.
+- check if .env is configured before trying anything
 
 
 ### Sources
