@@ -9,6 +9,7 @@
         "php": "^7.3|^8.0",
         "graham-campbell/bitbucket": "^8.0",
         "guzzlehttp/psr7": "^2.0",
+        "illuminate/http": "^8.0",
         "laravel-zero/framework": "^8.8",
         "php-http/curl-client": "^2.2",
         "php-http/message": "^1.11"
