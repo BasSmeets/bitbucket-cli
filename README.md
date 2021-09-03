@@ -22,3 +22,8 @@ This is a wrapper cli tool on top of https://github.com/BitbucketPHP/Client usin
 - https://github.com/BitbucketPHP/Client
 - https://petstore.swagger.io/#/
 - https://api.bitbucket.org/swagger.json
+- https://github.com/czproject/git-php
+- https://laravel-zero.com/docs/commands
+
+## For testing use
+- https://bitbucket.org/Bas_Smeets/testrepo
