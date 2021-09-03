@@ -3,9 +3,13 @@
 namespace App\Commands;
 
 use Bitbucket\Client;
+use CzProject\GitPhp\GitException;
+use CzProject\GitPhp\GitRepository;
 use LaravelZero\Framework\Commands\Command;
 use Http\Client\Exception;
 use Illuminate\Support\Facades\Cache;
+use CzProject\GitPhp\Git;
+use Dotenv\Dotenv;
 
 
 class PrCreate extends Command
@@ -15,9 +19,10 @@ class PrCreate extends Command
      *
      * @var string
      */
-    // @todo add arguments to close source, include default reviewers and rebase
-    // accept the targetbranch as argument
-    protected $signature = 'pr:create {target : Branch where the pr should be created to (required)}{--close= : Close branch after merge (optional)}';
+    protected $signature = 'pr:create
+    {target : Branch where the pr should be created to (required)}
+    {--close= : Close branch after merge (optional)}
+    {--push= : git push to remote before pr (optional)}';
 
     /**
      * The description of the command.
@@ -32,6 +37,14 @@ class PrCreate extends Command
      */
     protected $client;
 
+    /** @var array of json payload */
+    protected $params;
+
+    /** @var Git git wrapper */
+    protected $git;
+    /** @var GitRepository */
+    protected $repo;
+
     /**
      * json with default reviewers in order to create the pr.
      * @var string
@@ -41,16 +54,37 @@ class PrCreate extends Command
     public function init()
     {
         $this->client = new Client();
-        $this->path = getcwd();
-        // @todo add check to see if git is installed.
-        $this->currentBranch = shell_exec('git branch --show-current');
-        echo $this->currentBranch;
-        $this->lastCommit = shell_exec('git log --format="%H" -n 1');
-        echo $this->lastCommit;
-        $this->lastCommitMessage = shell_exec('git log --format=%B -n 1' . $this->lastCommit);
-        echo $this->lastCommitMessage;
-        $this->targetBranch = $this->argument('target');
-        echo $this->targetBranch;
+        $this->git = new Git();
+        $dotEnv = Dotenv::createImmutable(getcwd(), '.bb.env');
+        $dotEnv->load();
+        $this->repo = $this->git->open(getcwd());
+    }
+
+    public function generatePayload()
+    {
+        $lastCommit = $this->repo->getLastCommit();
+        $lastCommitMsg = $lastCommit->getSubject();
+        $branch = $this->repo->getCurrentBranchName();
+        $targetBranch = $this->argument('target');
+        $close = $this->hasOption('close') == true;
+        $this->params = [
+            'title' => $lastCommitMsg,
+            'close_source_branch' => $close,
+            'source' => [
+                'branch' => [
+                    'name' => $branch
+                ]
+            ],
+            'destination' => [
+                'branch' => [
+                    'name' => $targetBranch
+                ]
+            ]
+        ];
+        if ($this->defaultReviewers) {
+            $this->params['reviewers'] = $this->defaultReviewers;
+        }
+        return true;
     }
 
     /**
@@ -61,15 +95,33 @@ class PrCreate extends Command
     public function handle()
     {
         $this->init();
+        if ($this->hasOption('push') == true) {
+            $this->task('Pushing to repo',  function() {
+                return $this->pushToRepo();
+            });
+        }
         $this->task('Authenticating with bitbucket API',  function() {
             return $this->authenticate();
         });
         $this->task('Gathering default reviewers', function() {
             return $this->getDefaultReviewers();
         });
+        $this->task('Generating payload message',  function() {
+            return $this->generatePayload();
+        });
         $this->task('Creating PullRequest', function() {
             return $this->createPullRequest();
         });
+    }
+
+    public function pushToRepo()
+    {
+        try {
+            $this->repo->push();
+        } catch (GitException $e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -78,19 +130,22 @@ class PrCreate extends Command
      */
     public function authenticate(): bool
     {
-        $pass = ENV('BB_PASSWORD');
-        $username = ENV('BB_USERNAME');
-        $this->client->authenticate(
-            Client::AUTH_HTTP_PASSWORD,
-            $username,
-            $pass
-        );
-        return true;
+        try {
+            $pass = ENV('BB_PASSWORD');
+            $username = ENV('BB_USERNAME');
+            $this->client->authenticate(
+                Client::AUTH_HTTP_PASSWORD,
+                $username,
+                $pass
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function getDefaultReviewers()
     {
-        Cache::flush();
         if ($dr = Cache::get('default_reviewers')) {
             $this->defaultReviewers = $dr;
         }
@@ -98,10 +153,11 @@ class PrCreate extends Command
             $params = [
                 'pagelen' => 100,
             ];
-            $this->defaultReviewers = $this->client->repositories()
+            $result = $this->client->repositories()
                 ->workspaces(ENV('BB_WORKSPACE'))
                 ->defaultReviewers(ENV('BB_REPO'))
                 ->list($params);
+            $this->defaultReviewers = $this->getDefaultReviewersFormatted($result['values']);
             Cache::put('default_reviewers', $this->defaultReviewers, now()->addDay());
             return true;
         } catch (Exception $e) {
@@ -110,13 +166,23 @@ class PrCreate extends Command
         }
     }
 
+    public function getDefaultReviewersFormatted($result)
+    {
+        $reviewers = [];
+        foreach ($result as $item) {
+            $reviewers[] = ['uuid' => $item['uuid']];
+        }
+        unset($reviewers[0]);
+        return $reviewers;
+    }
+
     public function createPullRequest()
     {
         try {
-//            $this->client->repositories()
-//                ->workspaces(ENV('BB_WORKSPACE'))
-//                ->pullRequests(ENV('BB_REPO'))
-//                ->create();
+            $this->client->repositories()
+                ->workspaces(ENV('BB_WORKSPACE'))
+                ->pullRequests(ENV('BB_REPO'))
+                ->create($this->params);
             return true;
         } catch (Exception $e) {
             $this->error('Failed to create PullRequest');
