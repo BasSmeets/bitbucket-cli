@@ -29,12 +29,8 @@ class CreatePullRequest extends Command
      */
     protected $description = 'Creates a pull request';
 
-    /**
-     * bitbucket client
-     *  @var ClientWrapper
-     */
+    /** @var ClientWrapper */
     protected $client;
-
     /** @var Git git wrapper */
     protected $git;
     /** @var GitRepository */
@@ -68,7 +64,7 @@ class CreatePullRequest extends Command
         }
         $this->task('Creating PullRequest', function() {
             try {
-                $pr = new PullRequest($this->client, $this->repo, array_merge($this->arguments(), $this->options()));
+                $pr = new PullRequest($this->client, array_merge($this->arguments(), $this->options()), $this->repo);
                 $pr->create();
             } catch (Exception $e) {
                 $this->error($e->getMessage());
@@ -86,6 +82,7 @@ class CreatePullRequest extends Command
         try {
             $this->repo->push();
         } catch (GitException $e) {
+            $this->error($e->getMessage());
             return false;
         }
         return true;

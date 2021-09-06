@@ -27,3 +27,7 @@ This is a wrapper cli tool on top of https://github.com/BitbucketPHP/Client usin
 
 ## For testing use
 - https://bitbucket.org/Bas_Smeets/testrepo
+
+## Build
+php bb app:build bb
+

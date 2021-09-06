@@ -29,13 +29,11 @@ class PullRequest
      * @param array $options
      * @throws Exception
      */
-    public function __construct(ClientWrapper $client, GitRepository $repo, array $options)
+    public function __construct(ClientWrapper $client, array $options, GitRepository $repo = null)
     {
         $this->client = $client;
         $this->repo = $repo;
         $this->options = $options;
-        $this->setDefaultReviewers();
-        $this->generatePayload();
     }
 
     /**
@@ -71,7 +69,10 @@ class PullRequest
         return $reviewers;
     }
 
-    protected function generatePayload()
+    /**
+     * @throws \CzProject\GitPhp\GitException
+     */
+    protected function generateCreatePrPayload(): void
     {
         $lastCommit = $this->repo->getLastCommit();
         $lastCommitMsg = $lastCommit->getSubject();
@@ -95,7 +96,6 @@ class PullRequest
         if ($this->defaultReviewers) {
             $this->payload['reviewers'] = $this->defaultReviewers;
         }
-        return true;
     }
 
     /**
@@ -103,9 +103,59 @@ class PullRequest
      */
     public function create()
     {
+        $this->setDefaultReviewers();
+        $this->generateCreatePrPayload();
         $this->client->repositories()
             ->workspaces(ENV('BB_WORKSPACE'))
             ->pullRequests(ENV('BB_REPO'))
             ->create($this->payload);
     }
+
+    public function approve()
+    {
+        $this->client->repositories()
+            ->workspaces(ENV('BB_WORKSPACE'))
+            ->pullRequests(ENV('BB_REPO'))
+            ->approval($this->options['id'])->approve();
+    }
+
+    public function merge() //TODO check if this can be async also so dont have to wait for bb to process the merge.
+    {
+        $this->client->repositories()
+            ->workspaces(ENV('BB_WORKSPACE'))
+            ->pullRequests(ENV('BB_REPO'))
+            ->merge(
+                $this->options['id'],
+                [
+                    'close_source_branch' => $this->options['close'],
+                    'merge_strategy' => $this->options['strat']
+                ]
+            );
+    }
+
+    public function list()
+    {
+        $list = $this->client->repositories()
+            ->workspaces(ENV('BB_WORKSPACE'))
+            ->pullRequests(ENV('BB_REPO'))
+            ->list([
+                'pagelen' => 50,
+                'q' => sprintf('title ~ "%s"', $this->options['title']),
+                ]
+            );
+        $ids = $this->extractPrIdsFromListResponse($list);
+        if (empty($ids)) {
+            throw new \Exception('No PullRequests found for provide title');
+        }
+        return implode(',', $ids);
+    }
+
+    protected function extractPrIdsFromListResponse($list)
+    {
+        foreach ($list['values'] as $value) {
+            $ids[] = $value['id'];
+        }
+        return $ids ?? [];
+    }
+
 }
