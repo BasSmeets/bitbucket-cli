@@ -1,5 +1,6 @@
 {
     "name": "bassmeets/bitbucket-cli",
+    "version": "v0.0.1",
     "description": "PHP CLI application to interact with bitbucket api",
     "keywords": ["framework", "laravel", "laravel zero", "console", "cli", "bitbucket", "bitbucket-client"],
     "homepage": "https://github.com/BasSmeets",
@@ -36,5 +37,5 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "bin": ["bb"]
+    "bin": ["builds/bb"]
 }
