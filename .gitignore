@@ -22,5 +22,7 @@ public_html/hot
 
 storage/*.key
 .env
+.env.back
+.env.bb
 Homestead.yaml
 Homestead.json
