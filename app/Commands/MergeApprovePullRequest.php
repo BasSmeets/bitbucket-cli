@@ -42,6 +42,7 @@ class MergeApprovePullRequest extends Command
             foreach ($ids as $id) {
                 try {
                     $options = array_merge($this->options(), $this->arguments(), ['id' => $id]);
+                    $options['close'] = true;
                     $options['strat'] = 'merge_commit'; //TODO this is hardcoded now.
                     $pr = new PullRequest($this->client, $options);
                     $pr->approve();

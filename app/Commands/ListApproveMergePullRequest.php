@@ -74,6 +74,7 @@ class ListApproveMergePullRequest extends Command
                 try {
                     $options = array_merge($this->options(), $this->arguments(), ['id' => $id]);
                     $options['strat'] = 'merge_commit'; //TODO this is hardcoded now.
+                    $options['close'] = true;
                     $pr = new PullRequest($this->client, $options);
                     $pr->approve();
                     $pr->merge();

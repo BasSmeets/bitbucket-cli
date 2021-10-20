@@ -24,6 +24,8 @@ class PullRequest
     /** @var array $payload */
     public $payload;
 
+    public const OPEN_STATUS = 'OPEN';
+
     /**
      * @param ClientWrapper $client
      * @param GitRepository $repo
@@ -146,10 +148,19 @@ class PullRequest
             ->pullRequests(ENV('BB_REPO'))
             ->list([
                 'pagelen' => 50,
-                'q' => sprintf('title ~ "%s"', $this->options['title']),
+                'q' => sprintf('title~"%s"', $this->options['title']),
                 ]
-            ); // TODO only fetch open prs
+            );
         $ids = $this->extractPrIdsFromListResponse($list);
+        foreach ($ids as $key => $id) {
+            $pr = $this->client->repositories()
+                ->workspaces(ENV('BB_WORKSPACE'))
+                ->pullRequests(ENV('BB_REPO'))
+                ->show($id);
+            if ($pr['state'] !== self::OPEN_STATUS) {
+                unset($ids[$key]);
+            }
+        }
         if (empty($ids)) {
             throw new \Exception('No PullRequests found for provide title');
         }
