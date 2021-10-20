@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use CzProject\GitPhp\GitException;
 use CzProject\GitPhp\GitRepository;
 use Http\Client\Exception;
 use Illuminate\Support\Facades\Cache;
@@ -58,19 +59,24 @@ class PullRequest
     /**
      * @param $result
      * @return array
+     * @throws Exception
      */
     protected function formatDefaultReviewers($result): array
     {
+        $currentUser = $this->client->currentUser()->show();
+        $currentUserName = $currentUser['display_name'] ?? '';
         $reviewers = [];
         foreach ($result as $item) {
+            if ($item['display_name'] == $currentUserName) {
+                continue;
+            }
             $reviewers[] = ['uuid' => $item['uuid']];
         }
-        unset($reviewers[0]);
         return $reviewers;
     }
 
     /**
-     * @throws \CzProject\GitPhp\GitException
+     * @throws GitException
      */
     protected function generateCreatePrPayload(): void
     {
@@ -142,7 +148,7 @@ class PullRequest
                 'pagelen' => 50,
                 'q' => sprintf('title ~ "%s"', $this->options['title']),
                 ]
-            );
+            ); // TODO only fetch open prs
         $ids = $this->extractPrIdsFromListResponse($list);
         if (empty($ids)) {
             throw new \Exception('No PullRequests found for provide title');
