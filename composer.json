@@ -13,7 +13,8 @@
         "guzzlehttp/psr7": "^2.0",
         "illuminate/http": "^8.0",
         "php-http/curl-client": "^2.2",
-        "php-http/message": "^1.11"
+        "php-http/message": "^1.11",
+        "symfony/http-client": "^6.2"
     },
     "require-dev": {
         "laravel-zero/framework": "^8.8",
@@ -33,7 +34,11 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
